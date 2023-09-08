@@ -1,0 +1,33 @@
+syntax = "proto3";
+option go_package = "./;users";
+package proto.users.v1;
+
+import "google/protobuf/timestamp.proto";
+
+service UsersService {
+    rpc GetUser (GetUserRequest) returns (GetUserResponse) {}
+    rpc GetAllUsers (GetAllUsersRequest) returns (stream GetAllUsersResponse) {}
+}
+
+message GetUserRequest {
+    int64 id = 1;
+}
+
+message GetUserResponse {
+    User user = 1;
+}
+
+message GetAllUsersRequest {
+    int64 offset = 1;
+}
+
+message GetAllUsersResponse {
+    User user = 1;
+}
+
+message User {
+    int64 id = 1;
+    string first_name = 2;
+    string last_name = 3;
+    google.protobuf.Timestamp birthdate = 4;
+}
