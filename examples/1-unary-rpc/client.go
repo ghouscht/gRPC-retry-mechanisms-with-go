@@ -27,28 +27,7 @@ func main() {
 	connectCtx, cancel := context.WithTimeout(rootCtx, 3*time.Second)
 	defer cancel()
 
-	clientConn, err := grpc.DialContext(connectCtx, "localhost:8080",
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithBlock(),
-		grpc.WithDefaultServiceConfig(`
-{
-	"methodConfig": [
-		{
-			"name": [
-				{ "service": "proto.users.v1.UsersService" }
-			],
-			"retryPolicy": {
-				"maxAttempts": 5,
-				"initialBackoff" : "0.2s",
-				"maxBackoff": "5s",
-				"backoffMultiplier": 3,
-				"retryableStatusCodes": [ "UNAVAILABLE" ]
-			}
-		}
-	]
-}
-`),
-	)
+	clientConn, err := connect(connectCtx, "localhost:8080")
 	if err != nil {
 		panic(err)
 	}
@@ -75,4 +54,13 @@ func main() {
 		resp.User.LastName,
 		resp.User.Birthdate.AsTime().Format("Monday, 02 Jannuary 2006"),
 	)
+}
+
+func connect(ctx context.Context, target string, dialOptions ...grpc.DialOption) (*grpc.ClientConn, error) {
+	defaultDialOptions := []grpc.DialOption{
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithBlock(),
+	}
+
+	return grpc.DialContext(ctx, target, append(defaultDialOptions, dialOptions...)...)
 }

@@ -4,7 +4,9 @@ go 1.21
 
 require (
 	github.com/bufbuild/buf v1.26.1
+	github.com/davecgh/go-spew v1.1.1
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.0
+	github.com/olivere/elastic/v7 v7.0.32
 	google.golang.org/grpc v1.58.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.3.0
 	google.golang.org/protobuf v1.31.0
@@ -42,7 +44,6 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/moby/term v0.5.0 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
-	github.com/olivere/elastic/v7 v7.0.32 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0-rc4 // indirect
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect

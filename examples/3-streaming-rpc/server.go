@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"google.golang.org/grpc"
@@ -31,9 +32,20 @@ func main() {
 	)
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
-	server := grpc.NewServer(grpc.UnaryInterceptor(
-		logging.UnaryServerInterceptor(middleware.InterceptorLogger(logger), logging.WithLogOnEvents(logging.FinishCall)),
-	))
+	server := grpc.NewServer(
+		grpc.UnaryInterceptor(
+			logging.UnaryServerInterceptor(middleware.InterceptorLogger(logger), logging.WithLogOnEvents(logging.FinishCall)),
+		),
+		grpc.StreamInterceptor(
+			logging.StreamServerInterceptor(middleware.InterceptorLogger(logger),
+				logging.WithLogOnEvents(
+					logging.StartCall,
+					logging.PayloadSent,
+					logging.FinishCall,
+				),
+			),
+		),
+	)
 	users.RegisterUsersServiceServer(server, &Server{repo: repo.Users{}})
 
 	lis, err := net.Listen("tcp", listen)
@@ -64,18 +76,30 @@ func main() {
 }
 
 func (s *Server) GetUser(_ context.Context, req *users.GetUserRequest) (*users.GetUserResponse, error) {
-	user, err := s.repo.GetUser(req.Id)
-	if err != nil {
-		if errors.Is(err, repo.ErrNotFound) {
-			return nil, status.Error(codes.NotFound, err.Error())
-		}
-
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	return &users.GetUserResponse{User: user}, nil
+	return nil, status.Error(codes.Unimplemented, "not implemented")
 }
 
-func (s *Server) GetAllUsers(_ *users.GetAllUsersRequest, _ users.UsersService_GetAllUsersServer) error {
-	return status.Error(codes.Unimplemented, "not implemented")
+func (s *Server) GetAllUsers(req *users.GetAllUsersRequest, srv users.UsersService_GetAllUsersServer) error {
+	allUsers, err := s.repo.GetAllUsers(req.Offset)
+	if err != nil {
+		if errors.Is(err, repo.ErrNotFound) {
+			return nil
+		}
+
+		return status.Error(codes.Internal, err.Error())
+	}
+
+	for _, user := range allUsers {
+		if err := srv.Send(&users.GetAllUsersResponse{User: user}); err != nil {
+			return status.Error(codes.Internal, err.Error())
+		}
+
+		if time.Now().Second()%2 == 0 {
+			return status.Errorf(codes.Unavailable, "service unavailable in even seconds")
+		}
+
+		time.Sleep(250 * time.Millisecond)
+	}
+
+	return nil
 }
