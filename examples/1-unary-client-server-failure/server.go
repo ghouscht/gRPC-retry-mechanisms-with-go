@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/ghouscht/gRPC-retry-mechanisms-with-go/middleware"
 	"github.com/ghouscht/gRPC-retry-mechanisms-with-go/proto/users/v1"
 	"github.com/ghouscht/gRPC-retry-mechanisms-with-go/repo"
 )
@@ -25,14 +26,6 @@ type Server struct {
 
 var _ users.UsersServiceServer = &Server{}
 
-// InterceptorLogger adapts slog logger to interceptor logger.
-// https://github.com/grpc-ecosystem/go-grpc-middleware/blob/4679fb12b6915f8f7a682a525073fe3810d5c64e/interceptors/logging/examples/slog/example_test.go#L15C1-L21C2
-func InterceptorLogger(l *slog.Logger) logging.Logger {
-	return logging.LoggerFunc(func(ctx context.Context, lvl logging.Level, msg string, fields ...any) {
-		l.Log(ctx, slog.Level(lvl), msg, fields...)
-	})
-}
-
 func main() {
 	const (
 		listen = "[::1]:8080"
@@ -40,7 +33,7 @@ func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
 	server := grpc.NewServer(grpc.UnaryInterceptor(
-		logging.UnaryServerInterceptor(InterceptorLogger(logger), logging.WithLogOnEvents(logging.FinishCall)),
+		logging.UnaryServerInterceptor(middleware.InterceptorLogger(logger), logging.WithLogOnEvents(logging.FinishCall)),
 	))
 	users.RegisterUsersServiceServer(server, &Server{repo: repo.Users{}})
 
