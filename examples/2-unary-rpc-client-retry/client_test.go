@@ -30,6 +30,7 @@ func TestConnect(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// Get the method config for the GetUser RPC method so we can check if the retry policy is set.
 	mc := cc.GetMethodConfig("/proto.users.v1.UsersService/GetUser")
 	if mc.RetryPolicy == nil {
 		t.Fatal("expected retry policy to be set")

@@ -1,6 +1,5 @@
-# gRPC retry mechanisms in go
-My first ever talk I held at the [Bärner Go Talks 2023 no. 3](https://www.meetup.com/berner-go-meetup/events/293782118/) 
-about gRPC and retry mechanisms in go.
+# gRPC retry mechanisms in Go
+Talk I held at the [Bärner Go Talks 2023 no. 3](https://www.meetup.com/berner-go-meetup/events/293782118/) about gRPC and retry mechanisms in Go.
 
 ## gRPC in general
 Have a look at the slides I made for the talk [here](https://docs.google.com/presentation/d/1nWdZv9fzuEldlsOQKqtgBQSWuKpFnr-cZkGPGxQe4a0/edit?usp=sharing).

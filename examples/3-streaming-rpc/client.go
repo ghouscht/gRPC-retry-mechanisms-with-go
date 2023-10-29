@@ -21,36 +21,35 @@ func main() {
 	rootCtx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
-	if len(os.Args) != 2 {
-		fmt.Printf("Usage: %s ID\n", os.Args[0])
-		os.Exit(1)
+	userId, err := parseArguments(os.Args)
+	if err != nil {
+		panic(err)
 	}
 
 	connectCtx, cancel := context.WithTimeout(rootCtx, 3*time.Second)
 	defer cancel()
 
+	// Create a new connection to the users service server.
 	clientConn, err := connect(connectCtx, "localhost:8080")
 	if err != nil {
 		panic(err)
 	}
 	defer clientConn.Close()
 
+	// Create a new users service client stub with the connection we just created.
 	usersService := users.NewUsersServiceClient(clientConn)
 
 	requestCtx, cancel := context.WithTimeout(rootCtx, 5*time.Second)
 	defer cancel()
 
-	userId, err := strconv.ParseInt(os.Args[1], 10, 64)
-	if err != nil {
-		panic(err)
-	}
-
+	// Call the GetAllUsers stream RPC method with the user ID we got from the command line.
 	usersClient, err := usersService.GetAllUsers(requestCtx, &users.GetAllUsersRequest{Offset: userId})
 	if err != nil {
 		panic(err)
 	}
 
 	for {
+		// Read from the stream until the server closes it (EOF).
 		resp, err := usersClient.Recv()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
@@ -71,8 +70,8 @@ func main() {
 
 func connect(ctx context.Context, target string, dialOptions ...grpc.DialOption) (*grpc.ClientConn, error) {
 	defaultDialOptions := []grpc.DialOption{
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithBlock(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()), // disable TLS
+		grpc.WithBlock(), // block until the underlying connection is up
 		grpc.WithDefaultServiceConfig(`
 {
 	"methodConfig": [
@@ -89,8 +88,17 @@ func connect(ctx context.Context, target string, dialOptions ...grpc.DialOption)
 			}
 		}
 	]
-}`),
+}`), // Configure a retry policy for the UsersService service with a maximum of 5 attempts in case the server returns
+		// an UNAVAILABLE status code.
 	}
 
 	return grpc.DialContext(ctx, target, append(defaultDialOptions, dialOptions...)...)
+}
+
+func parseArguments(args []string) (int64, error) {
+	if len(args) != 2 {
+		return 0, fmt.Errorf("usage: %s ID", args[0])
+	}
+
+	return strconv.ParseInt(args[1], 10, 64)
 }
