@@ -22,7 +22,6 @@ is defined by the service config.
 sequenceDiagram
     participant Client Application
     participant gRPC Client Stub
-    participant gRPC Server Stub
     participant Server Application
 
     Client Application->>Server Application: GetUser() RPC
@@ -52,7 +51,6 @@ If you're asking yourself why the client stub can't retry the RPC automatically,
 sequenceDiagram
     participant Client Application
     participant gRPC Client Stub
-    participant gRPC Server Stub
     participant Server Application
 
     Client Application->>Server Application: GetAllUsers() RPC call
